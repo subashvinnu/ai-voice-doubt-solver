@@ -1,0 +1,41 @@
+
+import streamlit as st
+import os
+from dotenv import load_dotenv
+from openai import OpenAI
+from elevenlabs import play, Voice, VoiceSettings, generate, set_api_key
+
+
+load_dotenv()
+openai_key = os.getenv("OPENAI_API_KEY")
+eleven_key = os.getenv("ELEVENLABS_API_KEY")
+
+
+client = OpenAI(api_key=openai_key)
+set_api_key(eleven_key)
+
+
+st.title("🗣️ AI Voice Explainer")
+prompt = st.text_area("Enter your study question or topic:", height=150)
+
+if st.button("Explain with Voice"):
+    with st.spinner("Thinking..."):
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+        )
+        answer = response.choices[0].message.content
+        st.success("Done!")
+
+        st.markdown("**AI Explanation:**")
+        st.write(answer)
+
+        
+        audio = generate(
+            text=answer,
+            voice=Voice(
+                voice_id="Rachel",
+                settings=VoiceSettings(stability=0.5, similarity_boost=0.75)
+            )
+        )
+        st.audio(audio, format="audio/mp3")
